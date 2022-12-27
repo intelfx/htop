@@ -352,6 +352,7 @@ void Platform_setMemoryValues(Meter* this) {
 
    this->total     = pl->totalMem;
    this->values[0] = pl->usedMem;
+   this->values[1] = 0; /* compressed */
    this->values[2] = pl->buffersMem;
    this->values[3] = pl->sharedMem;
    this->values[4] = pl->cachedMem;
@@ -366,13 +367,26 @@ void Platform_setMemoryValues(Meter* this) {
       this->values[4] += shrinkableSize;
       this->values[5] += shrinkableSize;
    }
+
+   if (lpl->zswap.usedZswapOrig > 0 || lpl->zswap.usedZswapComp > 0) {
+      this->values[0] -= lpl->zswap.usedZswapComp;
+      this->values[1] += lpl->zswap.usedZswapComp;
+   }
 }
 
 void Platform_setSwapValues(Meter* this) {
    const ProcessList* pl = this->pl;
+   const LinuxProcessList* lpl = (const LinuxProcessList*) pl;
+
    this->total = pl->totalSwap;
    this->values[0] = pl->usedSwap;
    this->values[1] = pl->cachedSwap;
+   this->values[2] = 0; /* frontswap -- memory that is accounted to swap but resides elsewhere */
+
+   if (lpl->zswap.usedZswapOrig > 0 || lpl->zswap.usedZswapComp > 0) {
+      this->values[0] -= lpl->zswap.usedZswapOrig;
+      this->values[2] += lpl->zswap.usedZswapOrig;
+   }
 }
 
 void Platform_setZramValues(Meter* this) {

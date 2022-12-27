@@ -1767,6 +1767,7 @@ errorReadingProcess:
 }
 
 static inline void LinuxProcessList_scanMemoryInfo(ProcessList* this) {
+   LinuxProcessList *lpl = (LinuxProcessList *)this;
    memory_t availableMem = 0;
    memory_t freeMem = 0;
    memory_t totalMem = 0;
@@ -1777,6 +1778,8 @@ static inline void LinuxProcessList_scanMemoryInfo(ProcessList* this) {
    memory_t swapCacheMem = 0;
    memory_t swapFreeMem = 0;
    memory_t sreclaimableMem = 0;
+   memory_t zswapCompMem = 0;
+   memory_t zswapOrigMem = 0;
 
    FILE* file = fopen(PROCMEMINFOFILE, "r");
    if (!file)
@@ -1821,6 +1824,10 @@ static inline void LinuxProcessList_scanMemoryInfo(ProcessList* this) {
             break;
          }
          break;
+      case 'Z':
+         tryRead("Zswap:", zswapCompMem);
+         tryRead("Zswapped:", zswapOrigMem);
+         break;
       }
 
       #undef tryRead
@@ -1846,6 +1853,8 @@ static inline void LinuxProcessList_scanMemoryInfo(ProcessList* this) {
    this->totalSwap = swapTotalMem;
    this->usedSwap = swapTotalMem - swapFreeMem - swapCacheMem;
    this->cachedSwap = swapCacheMem;
+   lpl->zswap.usedZswapComp = zswapCompMem;
+   lpl->zswap.usedZswapOrig = zswapOrigMem;
 }
 
 static void LinuxProcessList_scanHugePages(LinuxProcessList* this) {
@@ -1902,6 +1911,24 @@ static void LinuxProcessList_scanHugePages(LinuxProcessList* this) {
    }
 
    closedir(dir);
+}
+
+static inline void LinuxProcessList_scanZswapInfo(LinuxProcessList *this) {
+   long max_pool_percent = 0;
+   int r;
+   char buf[256];
+
+   r = xReadfile("/sys/module/zswap/parameters/max_pool_percent", buf, 256);
+   if (r <= 0) {
+      return;
+   }
+   max_pool_percent = strtol(buf, NULL, 10);
+   if (max_pool_percent < 0 || max_pool_percent > 100) {
+      return;
+   }
+
+   this->zswap.totalZswapPool = this->super.totalMem * max_pool_percent / 100;
+   /* the rest of the metrics are set in LinuxProcessList_scanMemoryInfo() */
 }
 
 static inline void LinuxProcessList_scanZramInfo(LinuxProcessList* this) {
@@ -2256,6 +2283,7 @@ void ProcessList_goThroughEntries(ProcessList* super, bool pauseProcessUpdate) {
    LinuxProcessList_scanHugePages(this);
    LinuxProcessList_scanZfsArcstats(this);
    LinuxProcessList_scanZramInfo(this);
+   LinuxProcessList_scanZswapInfo(this);
 
    double period = LinuxProcessList_scanCPUTime(super);
 

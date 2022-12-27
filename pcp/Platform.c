@@ -529,10 +529,11 @@ void Platform_setMemoryValues(Meter* this) {
 
    this->total     = pl->totalMem;
    this->values[0] = pl->usedMem;
-   this->values[1] = pl->buffersMem;
-   this->values[2] = pl->sharedMem;
-   this->values[3] = pl->cachedMem;
-   this->values[4] = pl->availableMem;
+   // this->values[1] = "compressed memory, like zswap on linux"
+   this->values[2] = pl->buffersMem;
+   this->values[3] = pl->sharedMem;
+   this->values[4] = pl->cachedMem;
+   this->values[5] = pl->availableMem;
 
    if (ppl->zfs.enabled != 0) {
       // ZFS does not shrink below the value of zfs_arc_min.
@@ -540,8 +541,8 @@ void Platform_setMemoryValues(Meter* this) {
       if (ppl->zfs.size > ppl->zfs.min)
          shrinkableSize = ppl->zfs.size - ppl->zfs.min;
       this->values[0] -= shrinkableSize;
-      this->values[3] += shrinkableSize;
       this->values[4] += shrinkableSize;
+      this->values[5] += shrinkableSize;
    }
 }
 
@@ -550,6 +551,7 @@ void Platform_setSwapValues(Meter* this) {
    this->total = pl->totalSwap;
    this->values[0] = pl->usedSwap;
    this->values[1] = pl->cachedSwap;
+   // this->values[2] = "pages that are accounted to swap but stored elsewhere, like frontswap on linux"
 }
 
 void Platform_setZramValues(Meter* this) {

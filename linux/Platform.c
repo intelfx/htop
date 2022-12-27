@@ -352,10 +352,10 @@ void Platform_setMemoryValues(Meter* this) {
 
    this->total     = pl->totalMem;
    this->values[0] = pl->usedMem;
-   this->values[1] = pl->buffersMem;
-   this->values[2] = pl->sharedMem;
-   this->values[3] = pl->cachedMem;
-   this->values[4] = pl->availableMem;
+   this->values[2] = pl->buffersMem;
+   this->values[3] = pl->sharedMem;
+   this->values[4] = pl->cachedMem;
+   this->values[5] = pl->availableMem;
 
    if (lpl->zfs.enabled != 0 && !Running_containerized) {
       // ZFS does not shrink below the value of zfs_arc_min.
@@ -363,8 +363,8 @@ void Platform_setMemoryValues(Meter* this) {
       if (lpl->zfs.size > lpl->zfs.min)
          shrinkableSize = lpl->zfs.size - lpl->zfs.min;
       this->values[0] -= shrinkableSize;
-      this->values[3] += shrinkableSize;
       this->values[4] += shrinkableSize;
+      this->values[5] += shrinkableSize;
    }
 }
 

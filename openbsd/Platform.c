@@ -228,17 +228,19 @@ void Platform_setMemoryValues(Meter* this) {
    usedMem -= buffersMem + cachedMem;
    this->total = pl->totalMem;
    this->values[0] = usedMem;
-   this->values[1] = buffersMem;
-   // this->values[2] = "shared memory, like tmpfs and shm"
-   this->values[3] = cachedMem;
-   // this->values[4] = "available memory"
+   // this->values[1] = "compressed memory, like zswap on linux"
+   this->values[2] = buffersMem;
+   // this->values[3] = "shared memory, like tmpfs and shm"
+   this->values[4] = cachedMem;
+   // this->values[5] = "available memory"
 }
 
 void Platform_setSwapValues(Meter* this) {
    const ProcessList* pl = this->pl;
    this->total = pl->totalSwap;
    this->values[0] = pl->usedSwap;
-   this->values[1] = NAN;
+   // this->values[1] = "pages that are both in swap and RAM, like SwapCached on linux"
+   // this->values[2] = "pages that are accounted to swap but stored elsewhere, like frontswap on linux"
 }
 
 char* Platform_getProcessEnv(pid_t pid) {

@@ -231,10 +231,11 @@ void Platform_setMemoryValues(Meter* this) {
 
    this->total = pl->totalMem;
    this->values[0] = pl->usedMem;
-   this->values[1] = pl->buffersMem;
-   // this->values[2] = "shared memory, like tmpfs and shm"
-   this->values[3] = pl->cachedMem;
-   // this->values[4] = "available memory"
+   // this->values[1] = "compressed memory, like zswap on linux"
+   this->values[2] = pl->buffersMem;
+   // this->values[3] = "shared memory, like tmpfs and shm"
+   this->values[4] = pl->cachedMem;
+   // this->values[5] = "available memory"
 
    if (fpl->zfs.enabled) {
       // ZFS does not shrink below the value of zfs_arc_min.
@@ -242,8 +243,8 @@ void Platform_setMemoryValues(Meter* this) {
       if (fpl->zfs.size > fpl->zfs.min)
          shrinkableSize = fpl->zfs.size - fpl->zfs.min;
       this->values[0] -= shrinkableSize;
-      this->values[3] += shrinkableSize;
-      // this->values[4] += shrinkableSize;
+      this->values[4] += shrinkableSize;
+      // this->values[5] += shrinkableSize;
    }
 }
 
@@ -251,7 +252,8 @@ void Platform_setSwapValues(Meter* this) {
    const ProcessList* pl = this->pl;
    this->total = pl->totalSwap;
    this->values[0] = pl->usedSwap;
-   this->values[1] = NAN;
+   // this->values[1] = "pages that are both in swap and RAM, like SwapCached on linux"
+   // this->values[2] = "pages that are accounted to swap but stored elsewhere, like frontswap on linux"
 }
 
 void Platform_setZfsArcValues(Meter* this) {

@@ -377,9 +377,16 @@ void Platform_setSwapValues(Meter* this) {
 
 void Platform_setZramValues(Meter* this) {
    const LinuxProcessList* lpl = (const LinuxProcessList*) this->pl;
-   this->total = lpl->zram.totalZram;
-   this->values[0] = lpl->zram.usedZramComp;
-   this->values[1] = lpl->zram.usedZramOrig;
+
+   if (lpl->zram.totalZram > 0) {
+      this->total = lpl->zram.totalZram;
+      this->values[0] = lpl->zram.usedZramComp;
+      this->values[1] = lpl->zram.usedZramOrig;
+   } else if (lpl->zswap.totalZswapPool > 0 || lpl->zswap.usedZswapOrig > 0 || lpl->zswap.usedZswapComp > 0) {
+      this->total = lpl->zswap.totalZswapPool;
+      this->values[0] = lpl->zswap.usedZswapComp;
+      this->values[1] = lpl->zswap.usedZswapOrig;
+   }
 }
 
 void Platform_setZfsArcValues(Meter* this) {
